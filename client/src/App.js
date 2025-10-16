@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from "react-router-dom";
 import axios from "axios";
 
@@ -67,64 +68,79 @@ const PublicRoute = ({ children }) => {
   return user ? <Navigate to="/dashboard" /> : children;
 };
 
+// Layout component to conditionally show navbar
+const Layout = ({ children }) => {
+  const location = useLocation();
+  const { user } = useAuth();
+  
+  // Don't show navbar on login and register pages
+  const hideNavbar = ['/login', '/register'].includes(location.pathname);
+  
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {!hideNavbar && user && <Navbar />}
+      <main>
+        {children}
+      </main>
+    </div>
+  );
+};
+
 function App() {
   return (
     <AuthProvider>
       <NotesProvider>
         <Router>
-          <div className="min-h-screen bg-gray-50">
-            <Navbar />
-            <main>
-              <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" />} />
+          <Layout>
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" />} />
 
-                <Route
-                  path="/login"
-                  element={
-                    <PublicRoute>
-                      <Login />
-                    </PublicRoute>
-                  }
-                />
+              <Route
+                path="/login"
+                element={
+                  <PublicRoute>
+                    <Login />
+                  </PublicRoute>
+                }
+              />
 
-                <Route
-                  path="/register"
-                  element={
-                    <PublicRoute>
-                      <Register />
-                    </PublicRoute>
-                  }
-                />
+              <Route
+                path="/register"
+                element={
+                  <PublicRoute>
+                    <Register />
+                  </PublicRoute>
+                }
+              />
 
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  }
-                />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
 
-                <Route
-                  path="/note/:id"
-                  element={
-                    <ProtectedRoute>
-                      <NoteEditor />
-                    </ProtectedRoute>
-                  }
-                />
+              <Route
+                path="/note/:id"
+                element={
+                  <ProtectedRoute>
+                    <NoteEditor />
+                  </ProtectedRoute>
+                }
+              />
 
-                {/* <Route
-                  path="/note/new"
-                  element={
-                    <ProtectedRoute>
-                      <NoteEditor />
-                    </ProtectedRoute>
-                  }
-                /> */}
-              </Routes>
-            </main>
-          </div>
+              {/* <Route
+                path="/note/new"
+                element={
+                  <ProtectedRoute>
+                    <NoteEditor />
+                  </ProtectedRoute>
+                }
+              /> */}
+            </Routes>
+          </Layout>
         </Router>
       </NotesProvider>
     </AuthProvider>

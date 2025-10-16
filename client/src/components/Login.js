@@ -112,11 +112,11 @@ const Login = () => {
         </div>
 
         <div className="mt-8 text-center">
-          <p className="text-gray-600">
+          <p className="text-black">
             Don't have an account?{' '}
             <Link
               to="/register"
-              className="font-semibold text-purple-800 hover:text-purple-900 transition-colors"
+              className="font-semibold text-white hover:text-purple-900 transition-colors"
             >
               Create one
             </Link>

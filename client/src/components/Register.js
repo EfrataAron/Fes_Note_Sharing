@@ -39,7 +39,7 @@ const Register = () => {
       <div 
         className="absolute inset-0 opacity-40 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: 'url(/images/sticky-notes-bg.jpg)',
+          backgroundImage: 'url(/images/notes.jpg)',
         }}
       ></div>
       
@@ -58,8 +58,8 @@ const Register = () => {
               Fes Notes
             </div>
           </div>
-          <p className="text-xl text-gray-600 mb-2">Create account</p>
-          <p className="text-gray-500">Start your journey with beautiful notes</p>
+          <p className="text-xl text-gray-900 mb-2">Create account</p>
+          <p className="text-gray-700">Start your journey with beautiful notes</p>
         </div>
 
         {error && (
