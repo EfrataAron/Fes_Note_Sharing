@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -11,6 +11,8 @@ const Register = () => {
   
   const { register, error, clearError } = useAuth();
   const navigate = useNavigate();
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,30 +35,16 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Pattern - Note Cards */}
-      <div className="absolute inset-0 opacity-8">
-        <div className="grid grid-cols-5 gap-6 h-full p-8 transform rotate-12 scale-110">
-          {[...Array(35)].map((_, i) => (
-            <div
-              key={i}
-              className="bg-white rounded-2xl shadow-lg border border-purple-100 p-4 animate-float"
-              style={{
-                height: `${Math.random() * 120 + 100}px`,
-                animationDelay: `${i * 0.2}s`,
-                animationDuration: `${6 + Math.random() * 4}s`,
-              }}
-            >
-              {/* Simulated note content */}
-              <div className="space-y-2">
-                <div className="h-3 bg-purple-200 rounded w-3/4"></div>
-                <div className="h-2 bg-purple-100 rounded w-full"></div>
-                <div className="h-2 bg-purple-100 rounded w-2/3"></div>
-                <div className="h-2 bg-purple-100 rounded w-4/5"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Background Image - Sticky Notes */}
+      <div 
+        className="absolute inset-0 opacity-40 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: 'url(/images/sticky-notes-bg.jpg)',
+        }}
+      ></div>
+      
+      {/* Black Transparent Overlay */}
+      <div className="absolute inset-0 bg-black/10"></div>
       
       <div className="w-full max-w-md relative z-10">
         {/* Centered Branding */}

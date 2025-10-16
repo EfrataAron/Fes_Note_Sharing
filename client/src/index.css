@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@300;400;700&display=swap');
 
 @layer base {
   html {
@@ -30,6 +31,10 @@
   
   .purple-gradient {
     background: linear-gradient(135deg, #6b46c1 0%, #8b5cf6 100%);
+  }
+  
+  .font-handwriting {
+    font-family: 'Kalam', cursive;
   }
 }
 
