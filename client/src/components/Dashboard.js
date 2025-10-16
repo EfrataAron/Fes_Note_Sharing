@@ -1,14 +1,20 @@
+// Import necessary React hooks and components
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Trash2, Edit3, FileText, X, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Trash2, FileText, X, AlertTriangle } from 'lucide-react';
 import { useNotes } from '../context/NotesContext';
 
 const Dashboard = () => {
+  // Get notes data and functions from context
   const { notes, loading, error, fetchNotes, deleteNote } = useNotes();
+
+  // State for search functionality
   const [searchTerm, setSearchTerm] = useState('');
+
+  // State for delete confirmation modal
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, noteId: null, noteTitle: '' });
 
-  // Color mapping for note cards
+  // Function to get CSS classes for note card background colors
   const getColorClasses = (color) => {
     const colorMap = {
       yellow: 'bg-yellow-200 border-yellow-300',
@@ -18,44 +24,34 @@ const Dashboard = () => {
       purple: 'bg-purple-200 border-purple-300',
       orange: 'bg-orange-200 border-orange-300',
     };
+    // Return mapped color or default white if color not found
     return colorMap[color] || 'bg-white border-gray-100';
   };
 
-  // Color indicator dot
-  const getColorIndicator = (color) => {
-    const colorMap = {
-      yellow: 'bg-yellow-500',
-      pink: 'bg-pink-500',
-      blue: 'bg-blue-500',
-      green: 'bg-green-500',
-      purple: 'bg-purple-500',
-      orange: 'bg-orange-500',
-    };
-    return colorMap[color] || 'bg-gray-400';
-  };
 
-  // Load notes when component mounts
+
+  // Load all notes when component first renders
   useEffect(() => {
     fetchNotes();
   }, [fetchNotes]);
 
-  // Search notes
+  // Handle search input changes and filter notes
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
-    fetchNotes(e.target.value);
+    fetchNotes(e.target.value); // Fetch notes with search term
   };
 
-  // Open delete confirmation modal
+  // Open delete confirmation modal with note details
   const openDeleteModal = (id, title) => {
     setDeleteModal({ isOpen: true, noteId: id, noteTitle: title });
   };
 
-  // Close delete modal
+  // Close delete modal and reset state
   const closeDeleteModal = () => {
     setDeleteModal({ isOpen: false, noteId: null, noteTitle: '' });
   };
 
-  // Delete note
+  // Confirm and execute note deletion
   const handleDelete = async () => {
     if (deleteModal.noteId) {
       await deleteNote(deleteModal.noteId);
@@ -63,7 +59,7 @@ const Dashboard = () => {
     }
   };
 
-  // Format date
+  // Format timestamp to readable date string
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString();
   };
@@ -138,10 +134,7 @@ const Dashboard = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {notes.map((note, index) => {
-              // Debug: log the note color
-              console.log(`Note ${note.id} color:`, note.color);
-
-              // Temporary fallback: assign colors based on note ID if no color is set
+              // Assign color: use saved color or cycle through colors based on note ID
               const noteColor = note.color || ['yellow', 'pink', 'blue', 'green', 'purple', 'orange'][note.id % 6];
 
               return (
@@ -155,18 +148,7 @@ const Dashboard = () => {
                     <h3 className="text-xl font-bold text-gray-800 line-clamp-2 group-hover:text-purple-800 transition-colors">
                       {note.title}
                     </h3>
-                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          // Edit functionality is handled by the card click
-                        }}
-                        className="p-2 text-gray-400 hover:text-purple-800 hover:bg-purple-50 rounded-xl transition-all duration-200 hover:scale-110"
-                        title="Edit note"
-                      >
-                        <Edit3 size={18} />
-                      </button>
+                    <div className="opacity-0 group-hover:opacity-100 transition-all duration-300">
                       <button
                         onClick={(e) => {
                           e.preventDefault();
@@ -189,7 +171,6 @@ const Dashboard = () => {
                     <div className="text-sm text-gray-500 bg-white/50 px-4 py-2 rounded-full font-medium">
                       {formatDate(note.created_at)}
                     </div>
-                    <div className={`w-4 h-4 rounded-full shadow-sm ${getColorIndicator(noteColor)}`}></div>
                   </div>
                 </Link>
               );

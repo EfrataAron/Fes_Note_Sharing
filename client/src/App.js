@@ -131,14 +131,7 @@ function App() {
                 }
               />
 
-              {/* <Route
-                path="/note/new"
-                element={
-                  <ProtectedRoute>
-                    <NoteEditor />
-                  </ProtectedRoute>
-                }
-              /> */}
+
             </Routes>
           </Layout>
         </Router>

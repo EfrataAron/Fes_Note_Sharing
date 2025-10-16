@@ -294,26 +294,31 @@ app.get('/api/notes/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Create new note
+// API endpoint to create a new note
 app.post('/api/notes', authenticateToken, validateNote, async (req, res) => {
   try {
+    // Validate request data
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
+    // Extract note data from request body (color defaults to yellow)
     const { title, content, color = 'yellow' } = req.body;
 
+    // Insert new note into database
     const [result] = await pool.execute(
       'INSERT INTO notes (user_id, title, content, color) VALUES (?, ?, ?, ?)',
       [req.user.userId, title, content, color]
     );
 
+    // Fetch the newly created note to return to client
     const [newNote] = await pool.execute(
       'SELECT * FROM notes WHERE id = ?',
       [result.insertId]
     );
 
+    // Send success response with created note
     res.status(201).json({
       message: 'Note created successfully',
       note: newNote[0]
@@ -324,18 +329,20 @@ app.post('/api/notes', authenticateToken, validateNote, async (req, res) => {
   }
 });
 
-// Update note
+// API endpoint to update an existing note
 app.put('/api/notes/:id', authenticateToken, validateNote, async (req, res) => {
   try {
+    // Validate request data
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
 
+    // Extract note ID from URL and data from request body
     const { id } = req.params;
     const { title, content, color = 'yellow' } = req.body;
 
-    // Check if note exists and belongs to user
+    // Verify note exists and belongs to authenticated user
     const [existingNotes] = await pool.execute(
       'SELECT id FROM notes WHERE id = ? AND user_id = ?',
       [id, req.user.userId]
@@ -345,16 +352,19 @@ app.put('/api/notes/:id', authenticateToken, validateNote, async (req, res) => {
       return res.status(404).json({ error: 'Note not found' });
     }
 
+    // Update note in database
     await pool.execute(
       'UPDATE notes SET title = ?, content = ?, color = ? WHERE id = ? AND user_id = ?',
       [title, content, color, id, req.user.userId]
     );
 
+    // Fetch updated note to return to client
     const [updatedNote] = await pool.execute(
       'SELECT * FROM notes WHERE id = ?',
       [id]
     );
 
+    // Send success response with updated note
     res.json({
       message: 'Note updated successfully',
       note: updatedNote[0]

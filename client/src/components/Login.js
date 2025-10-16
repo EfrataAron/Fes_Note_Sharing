@@ -1,28 +1,34 @@
-import React, { useState, useMemo } from 'react';
+// Import necessary React hooks and components
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
+  // State for form inputs
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
+  // Get authentication functions from context
   const { login, error, clearError } = useAuth();
   const navigate = useNavigate();
 
 
 
+  // Handle form submission for user login
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
+    e.preventDefault(); // Prevent default form submission
+    setIsLoading(true); // Show loading state
 
+    // Attempt to log in user with provided credentials
     const result = await login(email, password);
     
+    // Redirect to dashboard if login successful
     if (result.success) {
       navigate('/dashboard');
     }
     
-    setIsLoading(false);
+    setIsLoading(false); // Reset loading state
   };
 
   return (
