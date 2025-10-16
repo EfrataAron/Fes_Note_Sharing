@@ -17,11 +17,14 @@ const Navbar = () => {
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/dashboard" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">N</span>
+          <Link to="/dashboard" className="flex items-center space-x-3 group">
+            <div className="w-10 h-10 bg-purple-800 rounded-xl flex items-center justify-center group-hover:bg-purple-700 transition-all duration-300 shadow-lg group-hover:shadow-xl">
+              <span className="text-white font-bold text-lg">F</span>
             </div>
-            <span className="text-xl font-bold text-gray-800">Notes</span>
+            <div className="flex flex-col">
+              <span className="text-xl font-bold text-gray-800 group-hover:text-purple-800 transition-colors">Fes Notes</span>
+              <span className="text-xs text-gray-500 -mt-1">Beautiful notes</span>
+            </div>
           </Link>
 
           {/* Navigation Links */}
@@ -29,14 +32,19 @@ const Navbar = () => {
             <div className="flex items-center space-x-4">
               <Link
                 to="/note/new"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+                className="bg-purple-800 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl flex items-center space-x-2 transition-all duration-300 shadow-lg hover:shadow-xl font-medium"
               >
                 <Plus size={16} />
                 <span>New Note</span>
               </Link>
 
-              <div className="flex items-center space-x-3">
-                <span className="text-gray-700 font-medium">{user.username}</span>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-purple-800 rounded-full flex items-center justify-center shadow-md">
+                    <span className="text-white font-semibold text-sm">{user.username.charAt(0).toUpperCase()}</span>
+                  </div>
+                  <span className="text-gray-700 font-medium">{user.username}</span>
+                </div>
                 
                 <button
                   onClick={handleLogout}

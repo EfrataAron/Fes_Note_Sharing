@@ -35,19 +35,22 @@ const Register = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-2xl">N</span>
+          <div className="mx-auto h-20 w-20 bg-purple-800 rounded-2xl flex items-center justify-center shadow-xl">
+            <span className="text-white font-bold text-3xl">F</span>
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Create your account
+          <h2 className="mt-8 text-4xl font-bold text-gray-900">
+            Join Fes Notes
           </h2>
+          <p className="mt-3 text-lg text-gray-600">
+            Create your account and start writing
+          </p>
           <p className="mt-2 text-sm text-gray-600">
-            Or{' '}
+            Already have an account?{' '}
             <Link
               to="/login"
-              className="font-medium text-blue-600 hover:text-blue-500"
+              className="font-medium text-purple-800 hover:text-purple-700 transition-colors"
             >
-              sign in to your existing account
+              Sign in here
             </Link>
           </p>
         </div>
@@ -69,7 +72,7 @@ const Register = () => {
                 name="username"
                 type="text"
                 required
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="mt-2 w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-800 focus:border-transparent transition-all duration-300 shadow-sm"
                 placeholder="Choose a username"
                 value={username}
                 onChange={(e) => {
@@ -88,7 +91,7 @@ const Register = () => {
                 name="email"
                 type="email"
                 required
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="mt-2 w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-800 focus:border-transparent transition-all duration-300 shadow-sm"
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => {
@@ -107,7 +110,7 @@ const Register = () => {
                 name="password"
                 type="password"
                 required
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="mt-2 w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-800 focus:border-transparent transition-all duration-300 shadow-sm"
                 placeholder="Create a password"
                 value={password}
                 onChange={(e) => {
@@ -126,7 +129,7 @@ const Register = () => {
                 name="confirmPassword"
                 type="password"
                 required
-                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="mt-2 w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-800 focus:border-transparent transition-all duration-300 shadow-sm"
                 placeholder="Confirm your password"
                 value={confirmPassword}
                 onChange={(e) => {
@@ -147,9 +150,9 @@ const Register = () => {
             <button
               type="submit"
               disabled={isLoading || password !== confirmPassword}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="w-full bg-purple-800 hover:bg-purple-700 text-white font-semibold py-4 px-6 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl text-lg"
             >
-              {isLoading ? 'Creating account...' : 'Create account'}
+              {isLoading ? 'Creating account...' : 'Create Account'}
             </button>
           </div>
         </form>

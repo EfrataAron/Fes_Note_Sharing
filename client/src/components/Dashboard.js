@@ -8,9 +8,9 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Load notes when component mounts
- useEffect(() => {
-  fetchNotes();
-}, [fetchNotes]);
+  useEffect(() => {
+    fetchNotes();
+  }, [fetchNotes]);
 
   // Search notes
   const handleSearch = (e) => {
@@ -31,106 +31,117 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">My Notes</h1>
-        <p className="text-gray-600">You have {notes.length} notes</p>
-      </div>
-
-      {/* Search and Add Note */}
-      <div className="flex gap-4 mb-8">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-          <input
-            type="text"
-            placeholder="Search your notes..."
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            value={searchTerm}
-            onChange={handleSearch}
-          />
-        </div>
-        <Link
-          to="/note/new"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-colors"
-        >
-          <Plus size={20} />
-          New Note
-        </Link>
-      </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
-          {error}
-        </div>
-      )}
-
-      {/* Loading */}
-      {loading && (
-        <div className="text-center py-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="mt-2 text-gray-600">Loading notes...</p>
-        </div>
-      )}
-
-      {/* Notes Grid */}
-      {!loading && notes.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Plus className="text-gray-400" size={32} />
-          </div>
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">No notes yet</h3>
-          <p className="text-gray-500 mb-6">
-            {searchTerm ? 'No notes match your search.' : 'Create your first note to get started.'}
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-6xl mx-auto p-6">
+        {/* Header */}
+        <div className="mb-10 text-center">
+          <h1 className="text-4xl font-bold text-purple-800 mb-3">Welcome Back!</h1>
+          <p className="text-gray-600 text-lg">
+            You have <span className="font-semibold text-purple-800">{notes.length}</span> {notes.length === 1 ? 'note' : 'notes'} in your collection
           </p>
-          {!searchTerm && (
-            <Link
-              to="/note/new"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg inline-flex items-center gap-2 transition-colors"
-            >
-              <Plus size={20} />
-              Create First Note
-            </Link>
-          )}
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {notes.map((note) => (
-            <div key={note.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-3">
-                <h3 className="text-lg font-semibold text-gray-800 line-clamp-2">
-                  {note.title}
-                </h3>
-                <div className="flex gap-1">
-                  <Link
-                    to={`/note/${note.id}`}
-                    className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                    title="Edit note"
-                  >
-                    <Edit3 size={16} />
-                  </Link>
-                  <button
-                    onClick={() => handleDelete(note.id)}
-                    className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-                    title="Delete note"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+
+        {/* Search and Add Note */}
+        <div className="flex gap-4 mb-10">
+          <div className="flex-1 relative">
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+            <input
+              type="text"
+              placeholder="Search your beautiful notes..."
+              className="w-full pl-12 pr-4 py-4 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-800 focus:border-transparent shadow-sm bg-white transition-all duration-300"
+              value={searchTerm}
+              onChange={handleSearch}
+            />
+          </div>
+          <Link
+            to="/note/new"
+            className="bg-purple-800 hover:bg-purple-700 text-white px-8 py-4 rounded-2xl flex items-center gap-3 transition-all duration-300 shadow-lg hover:shadow-xl font-medium"
+          >
+            <Plus size={20} />
+            New Note
+          </Link>
+        </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-2xl mb-8 shadow-sm">
+            <p className="font-medium">{error}</p>
+          </div>
+        )}
+
+        {/* Loading */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-4 border-purple-800"></div>
+            <p className="mt-4 text-purple-800 font-medium text-lg">Loading your beautiful notes...</p>
+          </div>
+        )}
+
+        {/* Notes Grid */}
+        {!loading && notes.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="w-32 h-32 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <Plus className="text-purple-800" size={48} />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-700 mb-3">No notes yet</h3>
+            <p className="text-gray-500 mb-8 text-lg">
+              {searchTerm ? 'No notes match your search.' : 'Create your first beautiful note to get started.'}
+            </p>
+            {!searchTerm && (
+              <Link
+                to="/note/new"
+                className="bg-purple-800 hover:bg-purple-700 text-white px-8 py-4 rounded-2xl inline-flex items-center gap-3 transition-all duration-300 shadow-lg hover:shadow-xl font-medium text-lg"
+              >
+                <Plus size={24} />
+                Create First Note
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {notes.map((note, index) => (
+              <div
+                key={note.id}
+                className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group animate-fade-in"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-bold text-gray-800 line-clamp-2 group-hover:text-purple-800 transition-colors">
+                    {note.title}
+                  </h3>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                    <Link
+                      to={`/note/${note.id}`}
+                      className="p-2 text-gray-400 hover:text-purple-800 hover:bg-purple-50 rounded-xl transition-all duration-200 hover:scale-110"
+                      title="Edit note"
+                    >
+                      <Edit3 size={18} />
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(note.id)}
+                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 hover:scale-110"
+                      title="Delete note"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                <p className="text-gray-600 line-clamp-3 mb-6 leading-relaxed">
+                  {note.content}
+                </p>
+
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-500 bg-gray-50 px-4 py-2 rounded-full font-medium">
+                    {formatDate(note.created_at)}
+                  </div>
+                  <div className="w-4 h-4 bg-purple-800 rounded-full shadow-sm"></div>
                 </div>
               </div>
-              
-              <p className="text-gray-600 text-sm line-clamp-3 mb-4">
-                {note.content}
-              </p>
-              
-              <div className="text-xs text-gray-500">
-                Created: {formatDate(note.created_at)}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
