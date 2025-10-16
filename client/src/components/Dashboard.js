@@ -8,9 +8,9 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Load notes when component mounts
-  useEffect(() => {
-    fetchNotes();
-  }, []);
+ useEffect(() => {
+  fetchNotes();
+}, [fetchNotes]);
 
   // Search notes
   const handleSearch = (e) => {

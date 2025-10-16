@@ -1,31 +1,38 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import axios from 'axios';
+// import React, { createContext, useContext, useReducer, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import axios from "axios";
 
 // Components
-import Navbar from './components/Navbar';
-import Login from './components/Login';
-import Register from './components/Register';
-import Dashboard from './components/Dashboard';
-import NoteEditor from './components/NoteEditor';
+import Navbar from "./components/Navbar";
+import Login from "./components/Login";
+import Register from "./components/Register";
+import Dashboard from "./components/Dashboard";
+import NoteEditor from "./components/NoteEditor";
 
 // Context
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { NotesProvider } from './context/NotesContext';
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import { NotesProvider } from "./context/NotesContext";
 
 // Configure axios defaults
-axios.defaults.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+axios.defaults.baseURL =
+  process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
 // Set up axios interceptor for token
 axios.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
   (error) => {
+    
     return Promise.reject(error);
   }
 );
@@ -33,7 +40,7 @@ axios.interceptors.request.use(
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -41,14 +48,14 @@ const ProtectedRoute = ({ children }) => {
       </div>
     );
   }
-  
+
   return user ? children : <Navigate to="/login" />;
 };
 
 // Public Route Component (redirect if logged in)
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -56,7 +63,7 @@ const PublicRoute = ({ children }) => {
       </div>
     );
   }
-  
+
   return user ? <Navigate to="/dashboard" /> : children;
 };
 
@@ -70,51 +77,51 @@ function App() {
             <main>
               <Routes>
                 <Route path="/" element={<Navigate to="/dashboard" />} />
-                
-                <Route 
-                  path="/login" 
+
+                <Route
+                  path="/login"
                   element={
                     <PublicRoute>
                       <Login />
                     </PublicRoute>
-                  } 
+                  }
                 />
-                
-                <Route 
-                  path="/register" 
+
+                <Route
+                  path="/register"
                   element={
                     <PublicRoute>
                       <Register />
                     </PublicRoute>
-                  } 
+                  }
                 />
-                
-                <Route 
-                  path="/dashboard" 
+
+                <Route
+                  path="/dashboard"
                   element={
                     <ProtectedRoute>
                       <Dashboard />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                
-                <Route 
-                  path="/note/:id" 
+
+                <Route
+                  path="/note/:id"
                   element={
                     <ProtectedRoute>
                       <NoteEditor />
                     </ProtectedRoute>
-                  } 
+                  }
                 />
-                
-                <Route 
-                  path="/note/new" 
+
+                {/* <Route
+                  path="/note/new"
                   element={
                     <ProtectedRoute>
                       <NoteEditor />
                     </ProtectedRoute>
-                  } 
-                />
+                  }
+                /> */}
               </Routes>
             </main>
           </div>
