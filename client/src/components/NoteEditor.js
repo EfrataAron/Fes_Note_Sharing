@@ -129,6 +129,7 @@ const NoteEditor = () => {
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [color, setColor] = useState("yellow");
   const [isSaving, setIsSaving] = useState(false);
 
   const isNewNote = id === "new";
@@ -140,6 +141,7 @@ const NoteEditor = () => {
       if (note) {
         setTitle(note.title);
         setContent(note.content);
+        setColor(note.color || "yellow");
       } else {
         console.warn("Note not found for id:", id);
       }
@@ -156,7 +158,7 @@ const NoteEditor = () => {
 
     try {
       if (isNewNote) {
-        const result = await createNote({ title, content });
+        const result = await createNote({ title, content, color });
         if (result.success) navigate("/dashboard");
       } else {
         if (!id || id === "undefined") {
@@ -164,7 +166,7 @@ const NoteEditor = () => {
           setIsSaving(false);
           return;
         }
-        const result = await updateNote(id, { title, content });
+        const result = await updateNote(id, { title, content, color });
         // if (result.success) alert('Note saved successfully!');
         if (result.success) {
           // Navigate back to dashboard after saving
@@ -228,6 +230,35 @@ const NoteEditor = () => {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
+          </div>
+
+          {/* Color Selection */}
+          <div>
+            <label className="block text-lg font-semibold text-gray-700 mb-3">
+              Note Color
+            </label>
+            <div className="flex gap-3">
+              {[
+                { name: 'yellow', bg: 'bg-yellow-200', border: 'border-yellow-300' },
+                { name: 'pink', bg: 'bg-pink-200', border: 'border-pink-300' },
+                { name: 'blue', bg: 'bg-blue-200', border: 'border-blue-300' },
+                { name: 'green', bg: 'bg-green-200', border: 'border-green-300' },
+                { name: 'purple', bg: 'bg-purple-200', border: 'border-purple-300' },
+                { name: 'orange', bg: 'bg-orange-200', border: 'border-orange-300' },
+              ].map((colorOption) => (
+                <button
+                  key={colorOption.name}
+                  type="button"
+                  onClick={() => setColor(colorOption.name)}
+                  className={`w-12 h-12 rounded-xl ${colorOption.bg} ${colorOption.border} border-2 transition-all duration-300 hover:scale-110 ${
+                    color === colorOption.name 
+                      ? 'ring-4 ring-purple-800 ring-opacity-50 scale-110' 
+                      : 'hover:shadow-lg'
+                  }`}
+                  title={`${colorOption.name} note`}
+                />
+              ))}
+            </div>
           </div>
 
           {/* Content */}

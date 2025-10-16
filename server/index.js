@@ -67,11 +67,25 @@ async function initializeDatabase() {
         user_id INT NOT NULL,
         title VARCHAR(255) NOT NULL,
         content TEXT NOT NULL,
+        color VARCHAR(20) DEFAULT 'yellow',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       )
     `);
+
+    // Add color column to existing notes table if it doesn't exist
+    try {
+      await pool.execute(`
+        ALTER TABLE notes ADD COLUMN color VARCHAR(20) DEFAULT 'yellow'
+      `);
+      console.log('Added color column to notes table');
+    } catch (error) {
+      // Column might already exist, ignore the error
+      if (!error.message.includes('Duplicate column name')) {
+        console.log('Color column already exists or other error:', error.message);
+      }
+    }
 
     console.log('Database tables initialized successfully');
   } catch (error) {
@@ -288,11 +302,11 @@ app.post('/api/notes', authenticateToken, validateNote, async (req, res) => {
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { title, content } = req.body;
+    const { title, content, color = 'yellow' } = req.body;
 
     const [result] = await pool.execute(
-      'INSERT INTO notes (user_id, title, content) VALUES (?, ?, ?)',
-      [req.user.userId, title, content]
+      'INSERT INTO notes (user_id, title, content, color) VALUES (?, ?, ?, ?)',
+      [req.user.userId, title, content, color]
     );
 
     const [newNote] = await pool.execute(
@@ -319,7 +333,7 @@ app.put('/api/notes/:id', authenticateToken, validateNote, async (req, res) => {
     }
 
     const { id } = req.params;
-    const { title, content } = req.body;
+    const { title, content, color = 'yellow' } = req.body;
 
     // Check if note exists and belongs to user
     const [existingNotes] = await pool.execute(
@@ -332,8 +346,8 @@ app.put('/api/notes/:id', authenticateToken, validateNote, async (req, res) => {
     }
 
     await pool.execute(
-      'UPDATE notes SET title = ?, content = ? WHERE id = ? AND user_id = ?',
-      [title, content, id, req.user.userId]
+      'UPDATE notes SET title = ?, content = ?, color = ? WHERE id = ? AND user_id = ?',
+      [title, content, color, id, req.user.userId]
     );
 
     const [updatedNote] = await pool.execute(
