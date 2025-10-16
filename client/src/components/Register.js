@@ -32,48 +32,64 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <div className="mx-auto h-20 w-20 bg-purple-800 rounded-2xl flex items-center justify-center shadow-xl">
-            <span className="text-white font-bold text-3xl">F</span>
-          </div>
-          <h2 className="mt-8 text-4xl font-bold text-gray-900">
-            Join Fes Notes
-          </h2>
-          <p className="mt-3 text-lg text-gray-600">
-            Create your account and start writing
-          </p>
-          <p className="mt-2 text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link
-              to="/login"
-              className="font-medium text-purple-800 hover:text-purple-700 transition-colors"
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Pattern - Note Cards */}
+      <div className="absolute inset-0 opacity-8">
+        <div className="grid grid-cols-5 gap-6 h-full p-8 transform rotate-12 scale-110">
+          {[...Array(35)].map((_, i) => (
+            <div
+              key={i}
+              className="bg-white rounded-2xl shadow-lg border border-purple-100 p-4 animate-float"
+              style={{
+                height: `${Math.random() * 120 + 100}px`,
+                animationDelay: `${i * 0.2}s`,
+                animationDuration: `${6 + Math.random() * 4}s`,
+              }}
             >
-              Sign in here
-            </Link>
-          </p>
+              {/* Simulated note content */}
+              <div className="space-y-2">
+                <div className="h-3 bg-purple-200 rounded w-3/4"></div>
+                <div className="h-2 bg-purple-100 rounded w-full"></div>
+                <div className="h-2 bg-purple-100 rounded w-2/3"></div>
+                <div className="h-2 bg-purple-100 rounded w-4/5"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      <div className="w-full max-w-md relative z-10">
+        {/* Centered Branding */}
+        <div className="text-center mb-12">
+          <div className="relative">
+            <h1 className="text-7xl font-bold text-purple-800 mb-6 tracking-tight relative z-10">
+              Fes Notes
+            </h1>
+            {/* Subtle glow effect */}
+            <div className="absolute inset-0 text-7xl font-bold text-purple-300 blur-sm opacity-30 tracking-tight">
+              Fes Notes
+            </div>
+          </div>
+          <p className="text-xl text-gray-600 mb-2">Create account</p>
+          <p className="text-gray-500">Start your journey with beautiful notes</p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
+        {error && (
+          <div className="mb-8 p-4 bg-red-50 border-l-4 border-red-400 rounded-r-lg">
+            <p className="text-red-700 text-sm font-medium">{error}</p>
+          </div>
+        )}
 
-          <div className="space-y-4">
+        <div className="bg-white rounded-3xl shadow-xl p-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Username
-              </label>
               <input
                 id="username"
                 name="username"
                 type="text"
                 required
-                className="mt-2 w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-800 focus:border-transparent transition-all duration-300 shadow-sm"
-                placeholder="Choose a username"
+                className="w-full px-0 py-4 text-lg border-0 border-b-2 border-gray-200 focus:border-purple-800 focus:outline-none transition-colors bg-transparent placeholder-gray-400"
+                placeholder="Username"
                 value={username}
                 onChange={(e) => {
                   setUsername(e.target.value);
@@ -83,16 +99,13 @@ const Register = () => {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
               <input
                 id="email"
                 name="email"
                 type="email"
                 required
-                className="mt-2 w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-800 focus:border-transparent transition-all duration-300 shadow-sm"
-                placeholder="Enter your email"
+                className="w-full px-0 py-4 text-lg border-0 border-b-2 border-gray-200 focus:border-purple-800 focus:outline-none transition-colors bg-transparent placeholder-gray-400"
+                placeholder="Email address"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
@@ -102,16 +115,13 @@ const Register = () => {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
               <input
                 id="password"
                 name="password"
                 type="password"
                 required
-                className="mt-2 w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-800 focus:border-transparent transition-all duration-300 shadow-sm"
-                placeholder="Create a password"
+                className="w-full px-0 py-4 text-lg border-0 border-b-2 border-gray-200 focus:border-purple-800 focus:outline-none transition-colors bg-transparent placeholder-gray-400"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
@@ -121,16 +131,13 @@ const Register = () => {
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm Password
-              </label>
               <input
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
                 required
-                className="mt-2 w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-800 focus:border-transparent transition-all duration-300 shadow-sm"
-                placeholder="Confirm your password"
+                className="w-full px-0 py-4 text-lg border-0 border-b-2 border-gray-200 focus:border-purple-800 focus:outline-none transition-colors bg-transparent placeholder-gray-400"
+                placeholder="Confirm password"
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value);
@@ -140,22 +147,39 @@ const Register = () => {
             </div>
 
             {password && confirmPassword && password !== confirmPassword && (
-              <div className="text-red-600 text-sm">
+              <div className="text-red-600 text-sm font-medium mt-2">
                 Passwords do not match
               </div>
             )}
-          </div>
 
-          <div>
             <button
               type="submit"
               disabled={isLoading || password !== confirmPassword}
-              className="w-full bg-purple-800 hover:bg-purple-700 text-white font-semibold py-4 px-6 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl text-lg"
+              className="w-full bg-purple-800 hover:bg-purple-900 text-white font-semibold py-4 px-6 rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl text-lg mt-8"
             >
-              {isLoading ? 'Creating account...' : 'Create Account'}
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2"></div>
+                  Creating account...
+                </div>
+              ) : (
+                'Create Account'
+              )}
             </button>
-          </div>
-        </form>
+          </form>
+        </div>
+
+        <div className="mt-8 text-center">
+          <p className="text-gray-600">
+            Already have an account?{' '}
+            <Link
+              to="/login"
+              className="font-semibold text-purple-800 hover:text-purple-900 transition-colors"
+            >
+              Sign in
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
