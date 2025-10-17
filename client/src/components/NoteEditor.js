@@ -1,7 +1,7 @@
 // Import necessary React hooks and components
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Save, ArrowLeft } from "lucide-react";
+import { Save, ArrowLeft, CheckCircle, XCircle, X, Lock } from "lucide-react";
 import { useNotes } from "../context/NotesContext";
 
 const NoteEditor = () => {
@@ -17,9 +17,24 @@ const NoteEditor = () => {
   const [content, setContent] = useState("");
   const [color, setColor] = useState("yellow"); // Default color
   const [isSaving, setIsSaving] = useState(false);
+  
+  // State for note permissions and sharing info
+  const [noteInfo, setNoteInfo] = useState({ noteType: 'owner', permission: 'edit', ownerUsername: '' });
+  
+  // State for notification popup
+  const [notification, setNotification] = useState({ isVisible: false, message: '', type: 'success' });
 
   // Check if this is a new note or editing existing one
   const isNewNote = id === "new";
+
+  // Show notification popup
+  const showNotification = (message, type = 'success') => {
+    setNotification({ isVisible: true, message, type });
+    // Auto-hide after 4 seconds
+    setTimeout(() => {
+      setNotification({ isVisible: false, message: '', type: 'success' });
+    }, 4000);
+  };
 
   // Load existing note data when editing (not for new notes)
   useEffect(() => {
@@ -31,6 +46,13 @@ const NoteEditor = () => {
         setTitle(note.title);
         setContent(note.content);
         setColor(note.color || "yellow"); // Use saved color or default
+        
+        // Set note permission info
+        setNoteInfo({
+          noteType: note.note_type || 'owner',
+          permission: note.permission || 'edit',
+          ownerUsername: note.owner_username || ''
+        });
       } else {
         console.warn("Note not found for id:", id);
       }
@@ -39,9 +61,15 @@ const NoteEditor = () => {
 
   // Handle save button click - create new note or update existing
   const handleSave = async () => {
+    // Check if user has permission to edit
+    if (noteInfo.noteType === 'shared' && noteInfo.permission === 'read') {
+      showNotification("You don't have permission to edit this note", 'error');
+      return;
+    }
+
     // Validate that both title and content are provided
     if (!title.trim() || !content.trim()) {
-      alert("Please fill in both title and content");
+      showNotification("Please fill in both title and content", 'error');
       return;
     }
 
@@ -51,26 +79,31 @@ const NoteEditor = () => {
       if (isNewNote) {
         // Create new note with title, content, and color
         const result = await createNote({ title, content, color });
-        if (result.success) navigate("/dashboard");
+        if (result.success) {
+          showNotification("Note created successfully!", 'success');
+          setTimeout(() => navigate("/dashboard"), 1500);
+        } else {
+          showNotification(result.error || "Failed to create note", 'error');
+        }
       } else {
         // Validate note ID before updating
         if (!id || id === "undefined") {
-          alert("Cannot update: Invalid note ID.");
+          showNotification("Cannot update: Invalid note ID", 'error');
           setIsSaving(false);
           return;
         }
         // Update existing note
         const result = await updateNote(id, { title, content, color });
         if (result.success) {
-          // Navigate back to dashboard after successful save
-          navigate("/dashboard");
+          showNotification("Note saved successfully!", 'success');
+          setTimeout(() => navigate("/dashboard"), 1500);
         } else {
-          alert("Failed to save note");
+          showNotification(result.error || "Failed to save note", 'error');
         }
       }
     } catch (err) {
       console.error("Error saving note:", err);
-      alert("Failed to save note");
+      showNotification("Failed to save note", 'error');
     }
 
     setIsSaving(false); // Reset loading state
@@ -89,22 +122,39 @@ const NoteEditor = () => {
               <ArrowLeft size={24} />
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-purple-800">
-                {isNewNote ? "Create New Note" : "Edit Note"}
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold text-purple-800">
+                  {isNewNote ? "Create New Note" : "Edit Note"}
+                </h1>
+                {noteInfo.noteType === 'shared' && (
+                  <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${
+                    noteInfo.permission === 'read' 
+                      ? 'bg-orange-100 text-orange-700' 
+                      : 'bg-blue-100 text-blue-700'
+                  }`}>
+                    {noteInfo.permission === 'read' && <Lock size={14} />}
+                    <span>{noteInfo.permission === 'read' ? 'Read Only' : 'Can Edit'}</span>
+                  </div>
+                )}
+              </div>
               <p className="text-gray-600 mt-1">
-                {isNewNote ? "Start writing your beautiful note" : "Make your changes"}
+                {isNewNote 
+                  ? "Start writing your beautiful note" 
+                  : noteInfo.noteType === 'shared' 
+                    ? `Shared by ${noteInfo.ownerUsername}` 
+                    : "Make your changes"
+                }
               </p>
             </div>
           </div>
 
           <button
             onClick={handleSave}
-            disabled={isSaving || !title.trim() || !content.trim()}
+            disabled={isSaving || !title.trim() || !content.trim() || (noteInfo.noteType === 'shared' && noteInfo.permission === 'read')}
             className="bg-purple-800 hover:bg-purple-700 text-white px-8 py-3 rounded-2xl flex items-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl font-medium"
           >
             <Save size={20} />
-            {isSaving ? "Saving..." : "Save Note"}
+            {isSaving ? "Saving..." : noteInfo.noteType === 'shared' && noteInfo.permission === 'read' ? "Read Only" : "Save Note"}
           </button>
         </div>
 
@@ -118,10 +168,15 @@ const NoteEditor = () => {
             </label>
             <input
               type="text"
-              className="w-full px-6 py-4 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-800 focus:border-transparent text-xl font-medium transition-all duration-300 shadow-sm"
+              className={`w-full px-6 py-4 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-800 focus:border-transparent text-xl font-medium transition-all duration-300 shadow-sm ${
+                noteInfo.noteType === 'shared' && noteInfo.permission === 'read' 
+                  ? 'bg-gray-50 cursor-not-allowed' 
+                  : ''
+              }`}
               placeholder="Give your note a beautiful title..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              disabled={noteInfo.noteType === 'shared' && noteInfo.permission === 'read'}
             />
           </div>
 
@@ -143,10 +198,15 @@ const NoteEditor = () => {
                   key={colorOption.name}
                   type="button"
                   onClick={() => setColor(colorOption.name)}
+                  disabled={noteInfo.noteType === 'shared' && noteInfo.permission === 'read'}
                   className={`w-12 h-12 rounded-xl ${colorOption.bg} ${colorOption.border} border-2 transition-all duration-300 hover:scale-110 ${
                     color === colorOption.name 
                       ? 'ring-4 ring-purple-800 ring-opacity-50 scale-110' 
                       : 'hover:shadow-lg'
+                  } ${
+                    noteInfo.noteType === 'shared' && noteInfo.permission === 'read' 
+                      ? 'opacity-50 cursor-not-allowed' 
+                      : ''
                   }`}
                   title={`${colorOption.name} note`}
                 />
@@ -160,15 +220,50 @@ const NoteEditor = () => {
               Content
             </label>
             <textarea
-              className="w-full px-6 py-4 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-800 focus:border-transparent resize-none text-lg leading-relaxed transition-all duration-300 shadow-sm"
+              className={`w-full px-6 py-4 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-800 focus:border-transparent resize-none text-lg leading-relaxed transition-all duration-300 shadow-sm ${
+                noteInfo.noteType === 'shared' && noteInfo.permission === 'read' 
+                  ? 'bg-gray-50 cursor-not-allowed' 
+                  : ''
+              }`}
               rows={18}
               placeholder="Start writing your thoughts here..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
+              disabled={noteInfo.noteType === 'shared' && noteInfo.permission === 'read'}
             />
           </div>
         </div>
       </div>
+
+      {/* Notification Popup */}
+      {notification.isVisible && (
+        <div className="fixed top-4 right-4 z-50 animate-slide-up">
+          <div className={`flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border ${
+            notification.type === 'success' 
+              ? 'bg-green-50 border-green-200 text-green-800' 
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            {notification.type === 'success' ? (
+              <CheckCircle className="text-green-600" size={24} />
+            ) : (
+              <XCircle className="text-red-600" size={24} />
+            )}
+            <div>
+              <p className="font-semibold text-sm">{notification.message}</p>
+            </div>
+            <button
+              onClick={() => setNotification({ isVisible: false, message: '', type: 'success' })}
+              className={`p-1 rounded-lg transition-colors ${
+                notification.type === 'success' 
+                  ? 'hover:bg-green-100 text-green-600' 
+                  : 'hover:bg-red-100 text-red-600'
+              }`}
+            >
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );

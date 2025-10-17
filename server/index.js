@@ -87,6 +87,22 @@ async function initializeDatabase() {
       }
     }
 
+    // Create shared_notes table for note sharing
+    await pool.execute(`
+      CREATE TABLE IF NOT EXISTS shared_notes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        note_id INT NOT NULL,
+        owner_id INT NOT NULL,
+        shared_with_id INT NOT NULL,
+        permission ENUM('read', 'edit') DEFAULT 'read',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE,
+        FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (shared_with_id) REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_share (note_id, shared_with_id)
+      )
+    `);
+
     console.log('Database tables initialized successfully');
   } catch (error) {
     console.error('Error initializing database:', error);
@@ -249,24 +265,55 @@ app.get('/api/auth/profile', authenticateToken, async (req, res) => {
 
 // Notes routes
 
-// Get all notes for authenticated user
+// Get all notes for authenticated user (owned + shared)
 app.get('/api/notes', authenticateToken, async (req, res) => {
   try {
     const { search, sort = 'created_at', order = 'DESC' } = req.query;
     
-    let query = 'SELECT * FROM notes WHERE user_id = ?';
-    let params = [req.user.userId];
+    // Query for owned notes
+    let ownedQuery = 'SELECT *, "owner" as note_type, user_id as original_owner_id FROM notes WHERE user_id = ?';
+    let ownedParams = [req.user.userId];
 
     if (search) {
-      query += ' AND (title LIKE ? OR content LIKE ?)';
+      ownedQuery += ' AND (title LIKE ? OR content LIKE ?)';
       const searchTerm = `%${search}%`;
-      params.push(searchTerm, searchTerm);
+      ownedParams.push(searchTerm, searchTerm);
     }
 
-    query += ` ORDER BY ${sort} ${order}`;
+    // Query for shared notes
+    let sharedQuery = `
+      SELECT n.*, "shared" as note_type, n.user_id as original_owner_id, 
+             u.username as owner_username, sn.permission
+      FROM notes n
+      JOIN shared_notes sn ON n.id = sn.note_id
+      JOIN users u ON n.user_id = u.id
+      WHERE sn.shared_with_id = ?
+    `;
+    let sharedParams = [req.user.userId];
 
-    const [notes] = await pool.execute(query, params);
-    res.json({ notes });
+    if (search) {
+      sharedQuery += ' AND (n.title LIKE ? OR n.content LIKE ?)';
+      const searchTerm = `%${search}%`;
+      sharedParams.push(searchTerm, searchTerm);
+    }
+
+    // Execute both queries
+    const [ownedNotes] = await pool.execute(ownedQuery, ownedParams);
+    const [sharedNotes] = await pool.execute(sharedQuery, sharedParams);
+
+    // Combine and sort all notes
+    const allNotes = [...ownedNotes, ...sharedNotes];
+    
+    // Sort combined results
+    allNotes.sort((a, b) => {
+      if (order === 'DESC') {
+        return new Date(b[sort]) - new Date(a[sort]);
+      } else {
+        return new Date(a[sort]) - new Date(b[sort]);
+      }
+    });
+
+    res.json({ notes: allNotes });
   } catch (error) {
     console.error('Get notes error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -342,20 +389,31 @@ app.put('/api/notes/:id', authenticateToken, validateNote, async (req, res) => {
     const { id } = req.params;
     const { title, content, color = 'yellow' } = req.body;
 
-    // Verify note exists and belongs to authenticated user
-    const [existingNotes] = await pool.execute(
+    // Check if user owns the note
+    const [ownedNotes] = await pool.execute(
       'SELECT id FROM notes WHERE id = ? AND user_id = ?',
       [id, req.user.userId]
     );
 
-    if (existingNotes.length === 0) {
-      return res.status(404).json({ error: 'Note not found' });
+    let canEdit = ownedNotes.length > 0;
+
+    // If not owner, check if user has edit permission through sharing
+    if (!canEdit) {
+      const [sharedNotes] = await pool.execute(
+        'SELECT permission FROM shared_notes WHERE note_id = ? AND shared_with_id = ? AND permission = "edit"',
+        [id, req.user.userId]
+      );
+      canEdit = sharedNotes.length > 0;
     }
 
-    // Update note in database
+    if (!canEdit) {
+      return res.status(403).json({ error: 'You do not have permission to edit this note' });
+    }
+
+    // Update note in database (don't change user_id, keep original owner)
     await pool.execute(
-      'UPDATE notes SET title = ?, content = ?, color = ? WHERE id = ? AND user_id = ?',
-      [title, content, color, id, req.user.userId]
+      'UPDATE notes SET title = ?, content = ?, color = ? WHERE id = ?',
+      [title, content, color, id]
     );
 
     // Fetch updated note to return to client
@@ -371,6 +429,89 @@ app.put('/api/notes/:id', authenticateToken, validateNote, async (req, res) => {
     });
   } catch (error) {
     console.error('Update note error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Share note with another user
+app.post('/api/notes/:id/share', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username, permission = 'read' } = req.body;
+
+    // Validate permission
+    if (!['read', 'edit'].includes(permission)) {
+      return res.status(400).json({ error: 'Invalid permission. Use "read" or "edit"' });
+    }
+
+    // Check if note exists and belongs to user
+    const [notes] = await pool.execute(
+      'SELECT id, title FROM notes WHERE id = ? AND user_id = ?',
+      [id, req.user.userId]
+    );
+
+    if (notes.length === 0) {
+      return res.status(404).json({ error: 'Note not found or you do not own this note' });
+    }
+
+    // Find user to share with
+    const [users] = await pool.execute(
+      'SELECT id, username FROM users WHERE username = ?',
+      [username]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const sharedWithUser = users[0];
+
+    // Check if already shared
+    const [existingShares] = await pool.execute(
+      'SELECT id FROM shared_notes WHERE note_id = ? AND shared_with_id = ?',
+      [id, sharedWithUser.id]
+    );
+
+    if (existingShares.length > 0) {
+      // Update existing share
+      await pool.execute(
+        'UPDATE shared_notes SET permission = ? WHERE note_id = ? AND shared_with_id = ?',
+        [permission, id, sharedWithUser.id]
+      );
+    } else {
+      // Create new share
+      await pool.execute(
+        'INSERT INTO shared_notes (note_id, owner_id, shared_with_id, permission) VALUES (?, ?, ?, ?)',
+        [id, req.user.userId, sharedWithUser.id, permission]
+      );
+    }
+
+    res.json({
+      message: 'Note shared successfully',
+      sharedWith: sharedWithUser.username,
+      permission: permission
+    });
+  } catch (error) {
+    console.error('Share note error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get shared notes (notes shared with current user)
+app.get('/api/notes/shared', authenticateToken, async (req, res) => {
+  try {
+    const [sharedNotes] = await pool.execute(`
+      SELECT n.*, u.username as owner_username, sn.permission, sn.created_at as shared_at
+      FROM notes n
+      JOIN shared_notes sn ON n.id = sn.note_id
+      JOIN users u ON n.user_id = u.id
+      WHERE sn.shared_with_id = ?
+      ORDER BY sn.created_at DESC
+    `, [req.user.userId]);
+
+    res.json({ notes: sharedNotes });
+  } catch (error) {
+    console.error('Get shared notes error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

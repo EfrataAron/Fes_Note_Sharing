@@ -214,6 +214,41 @@ export const NotesProvider = ({ children }) => {
     }
   };
 
+  // Share note with another user
+  const shareNote = async (noteId, username, permission = 'read') => {
+    try {
+      setLoading(true);
+      const response = await axios.post(`/notes/${noteId}/share`, {
+        username,
+        permission
+      });
+      return { success: true, message: response.data.message };
+    } catch (err) {
+      console.error('Share note error:', err);
+      const errorMessage = err.response?.data?.error || 'Failed to share note';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get shared notes
+  const fetchSharedNotes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await axios.get('/notes/shared');
+      return { success: true, notes: response.data.notes };
+    } catch (err) {
+      console.error('Fetch shared notes error:', err);
+      setError('Failed to fetch shared notes');
+      return { success: false, error: 'Failed to fetch shared notes' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const clearError = () => setError(null);
 
   const value = {
@@ -224,6 +259,8 @@ export const NotesProvider = ({ children }) => {
     createNote,
     updateNote,
     deleteNote,
+    shareNote,
+    fetchSharedNotes,
     clearError,
   };
 
