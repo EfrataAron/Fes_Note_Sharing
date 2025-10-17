@@ -47,16 +47,23 @@ const Login = () => {
       <div className="w-full max-w-md relative z-10">
         {/* Centered Branding */}
         <div className="text-center mb-12">
-          <div className="relative">
-            <h1 className="text-8xl font-bold text-purple-900 mb-6 tracking-tight relative z-10">
-              Fes Notes
-            </h1>
-            {/* Subtle glow effect */}
-            <div className="absolute inset-0 text-8xl font-bold text-purple-500 blur-sm opacity-30 tracking-tight">
-              Fes Notes
+          <div className="flex items-center justify-center mt-2 mb-4">
+            <img 
+              src="/images/logo.jfif" 
+              alt="Fes Notes Logo" 
+              className="w-20 h-20 rounded-2xl shadow-2xl mr-6"
+            />
+            <div className="relative">
+              <h1 className="text-7xl font-bold text-purple-900 tracking-tight relative z-10">
+                Fes Notes
+              </h1>
+              {/* Subtle glow effect */}
+              <div className="absolute inset-0 text-7xl font-bold text-purple-500 blur-sm opacity-30 tracking-tight">
+                Fes Notes
+              </div>
             </div>
           </div>
-          <p className="text-3xl font-bold text-black mb-4">Welcome back</p>
+          <p className="text-2xl font-bold text-black mb-2">Welcome back</p>
           <p className="text-xl font-bold text-gray-900">Sign in to continue to your notes</p>
         </div>
 

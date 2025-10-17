@@ -49,17 +49,24 @@ const Register = () => {
       <div className="w-full max-w-md relative z-10">
         {/* Centered Branding */}
         <div className="text-center mb-12">
-          <div className="relative">
-            <h1 className="text-7xl font-bold text-purple-800 mb-6 tracking-tight relative z-10">
-              Fes Notes
-            </h1>
-            {/* Subtle glow effect */}
-            <div className="absolute inset-0 text-7xl font-bold text-purple-300 blur-sm opacity-30 tracking-tight">
-              Fes Notes
+          <div className="flex items-center justify-center mb-6">
+            <img 
+              src="/images/logo.jfif" 
+              alt="Fes Notes Logo" 
+              className="w-20 h-20 rounded-2xl shadow-2xl mr-6"
+            />
+            <div className="relative">
+              <h1 className="text-7xl font-bold text-purple-800 tracking-tight relative z-10">
+                Fes Notes
+              </h1>
+              {/* Subtle glow effect */}
+              <div className="absolute inset-0 text-7xl font-bold text-purple-300 blur-sm opacity-30 tracking-tight">
+                Fes Notes
+              </div>
             </div>
           </div>
-          <p className="text-xl text-gray-900 mb-2">Create account</p>
-          <p className="text-gray-700">Start your journey with beautiful notes</p>
+          <p className="text-2xl text-gray-900 mb-2">Create account</p>
+          <p className="text-gray-800">Start your journey with beautiful notes</p>
         </div>
 
         {error && (
