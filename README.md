@@ -2,8 +2,6 @@
 
 A beautiful, modern note-taking application built with React and Node.js. Organize your thoughts with colorful, intuitive notes that sync seamlessly across your devices.
 
-![Fes Notes Banner](https://via.placeholder.com/800x200/6b46c1/ffffff?text=Fes+Notes+-+Beautiful+Notes)
-
 ## ✨ Features
 
 ### 🎨 **Beautiful Design**
@@ -47,7 +45,7 @@ A beautiful, modern note-taking application built with React and Node.js. Organi
 ### Prerequisites
 - **Node.js** (v14 or higher) - JavaScript runtime
 - **MySQL** - Local MySQL server installation
-- **npm** - Node package manager (comes with Node.js)
+- **npm** - Node package manager ( Node.js)
 
 ### Installation
 
@@ -84,7 +82,7 @@ A beautiful, modern note-taking application built with React and Node.js. Organi
    PORT=5000
    NODE_ENV=development
    ```
-
+ JWT_SECRET can be generated from https://generate-secret.vercel.app/32 
 5. **Start the development servers**
    
    **Terminal 1 - Start Backend Server:**
@@ -237,9 +235,7 @@ This application is designed to run locally on your development machine using No
 4. Push to the branch: `git push origin feature-name`
 5. Submit a pull request
 
-## 📝 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 👨‍💻 Author
 
