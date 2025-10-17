@@ -214,20 +214,29 @@ export const NotesProvider = ({ children }) => {
     }
   };
 
-  // Share note with another user
-  const shareNote = async (noteId, username, permission = 'read') => {
+  // Share note with one or multiple users
+  const shareNote = async (noteId, usernames, permission = 'read') => {
     try {
       setLoading(true);
       const response = await axios.post(`/notes/${noteId}/share`, {
-        username,
+        usernames, // Can be string or array
         permission
       });
-      return { success: true, message: response.data.message };
+      return { 
+        success: true, 
+        message: response.data.message,
+        successful: response.data.successful,
+        failed: response.data.failed
+      };
     } catch (err) {
       console.error('Share note error:', err);
       const errorMessage = err.response?.data?.error || 'Failed to share note';
       setError(errorMessage);
-      return { success: false, error: errorMessage };
+      return { 
+        success: false, 
+        error: errorMessage,
+        details: err.response?.data?.details
+      };
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,7 @@
 // Import necessary React hooks and components
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Trash2, FileText, X, AlertTriangle, Share2, CheckCircle, XCircle, Users } from 'lucide-react';
+import { Plus, Search, Trash2, FileText, X, AlertTriangle, Share2, CheckCircle, XCircle, Users, Eye } from 'lucide-react';
 import { useNotes } from '../context/NotesContext';
 
 const Dashboard = () => {
@@ -16,8 +16,11 @@ const Dashboard = () => {
 
   // State for share modal
   const [shareModal, setShareModal] = useState({ isOpen: false, noteId: null, noteTitle: '' });
-  const [shareUsername, setShareUsername] = useState('');
+  const [shareUsernames, setShareUsernames] = useState('');
   const [sharePermission, setSharePermission] = useState('read');
+
+  // State for view shares modal
+  const [viewSharesModal, setViewSharesModal] = useState({ isOpen: false, noteId: null, noteTitle: '', shares: [] });
 
   // State for notification popup
   const [notification, setNotification] = useState({ isVisible: false, message: '', type: 'success' });
@@ -70,15 +73,41 @@ const Dashboard = () => {
   // Open share modal
   const openShareModal = (id, title) => {
     setShareModal({ isOpen: true, noteId: id, noteTitle: title });
-    setShareUsername('');
+    setShareUsernames('');
     setSharePermission('read');
   };
 
   // Close share modal
   const closeShareModal = () => {
     setShareModal({ isOpen: false, noteId: null, noteTitle: '' });
-    setShareUsername('');
+    setShareUsernames('');
     setSharePermission('read');
+  };
+
+  // Open view shares modal
+  const openViewSharesModal = async (id, title) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/notes/${id}/shares`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setViewSharesModal({ isOpen: true, noteId: id, noteTitle: title, shares: data.shares });
+      } else {
+        showNotification('Failed to load sharing information', 'error');
+      }
+    } catch (error) {
+      showNotification('Failed to load sharing information', 'error');
+    }
+  };
+
+  // Close view shares modal
+  const closeViewSharesModal = () => {
+    setViewSharesModal({ isOpen: false, noteId: null, noteTitle: '', shares: [] });
   };
 
   // Show notification popup
@@ -92,15 +121,27 @@ const Dashboard = () => {
 
   // Handle note sharing
   const handleShare = async () => {
-    if (shareModal.noteId && shareUsername.trim()) {
-      const result = await shareNote(shareModal.noteId, shareUsername.trim(), sharePermission);
+    if (shareModal.noteId && shareUsernames.trim()) {
+      // Simple comma-separated usernames
+      const usernameList = shareUsernames
+        .split(',')
+        .map(u => u.trim())
+        .filter(u => u.length > 0);
+
+      if (usernameList.length === 0) {
+        showNotification('Please enter at least one username', 'error');
+        return;
+      }
+
+      const result = await shareNote(shareModal.noteId, usernameList, sharePermission);
+
       if (result.success) {
-        showNotification(`Note shared successfully with ${shareUsername}!`, 'success');
+        showNotification(result.message, 'success');
         closeShareModal();
       } else {
         showNotification(result.error || 'Failed to share note', 'error');
-        closeShareModal(); // Close modal on error too
-        clearError(); // Clear the main error message
+        closeShareModal();
+        clearError();
       }
     }
   };
@@ -210,19 +251,32 @@ const Dashboard = () => {
                       )}
                     </div>
                     <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                      {/* Only show share button for owned notes */}
+                      {/* Only show share and view shares buttons for owned notes */}
                       {note.note_type === 'owner' && (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            openShareModal(note.id, note.title);
-                          }}
-                          className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200 hover:scale-110"
-                          title="Share note"
-                        >
-                          <Share2 size={18} />
-                        </button>
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              openViewSharesModal(note.id, note.title);
+                            }}
+                            className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-xl transition-all duration-200 hover:scale-110"
+                            title="View who has access"
+                          >
+                            <Eye size={18} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              openShareModal(note.id, note.title);
+                            }}
+                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200 hover:scale-110"
+                            title="Share note"
+                          >
+                            <Share2 size={18} />
+                          </button>
+                        </>
                       )}
                       {/* Only show delete button for owned notes */}
                       {note.note_type === 'owner' && (
@@ -344,15 +398,18 @@ const Dashboard = () => {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Username to share with
+                    Usernames to share with
                   </label>
                   <input
                     type="text"
-                    value={shareUsername}
-                    onChange={(e) => setShareUsername(e.target.value)}
-                    placeholder="Enter username"
+                    value={shareUsernames}
+                    onChange={(e) => setShareUsernames(e.target.value)}
+                    placeholder="Enter usernames separated by commas (e.g., john, jane, bob)"
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Separate multiple usernames with commas
+                  </p>
                 </div>
 
                 <div>
@@ -381,10 +438,98 @@ const Dashboard = () => {
               </button>
               <button
                 onClick={handleShare}
-                disabled={!shareUsername.trim()}
+                disabled={!shareUsernames.trim()}
                 className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Share Note
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Shares Modal */}
+      {viewSharesModal.isOpen && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 animate-fade-in">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <Eye className="text-green-600" size={24} />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900">Shared With</h3>
+                  <p className="text-sm text-gray-500">Users who have access</p>
+                </div>
+              </div>
+              <button
+                onClick={closeViewSharesModal}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                <p className="font-semibold text-gray-900 truncate">"{viewSharesModal.noteTitle}"</p>
+              </div>
+
+              {viewSharesModal.shares.length === 0 ? (
+                <div className="text-center py-8">
+                  <Users className="mx-auto text-gray-400 mb-3" size={48} />
+                  <p className="text-gray-500">This note is not shared with anyone yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm font-medium text-gray-700 mb-3">
+                    Shared with {viewSharesModal.shares.length} {viewSharesModal.shares.length === 1 ? 'user' : 'users'}:
+                  </p>
+                  {viewSharesModal.shares.map((share, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Users size={16} className="text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{share.username}</p>
+                          <p className="text-xs text-gray-500">
+                            Shared {new Date(share.shared_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${share.permission === 'edit'
+                          ? 'bg-orange-100 text-orange-700'
+                          : 'bg-blue-100 text-blue-700'
+                          }`}>
+                          {share.permission === 'edit' ? 'Can Edit' : 'Read Only'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex gap-3 p-6 pt-0">
+              <button
+                onClick={closeViewSharesModal}
+                className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-2xl hover:bg-gray-50 transition-all duration-300 font-medium"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => {
+                  closeViewSharesModal();
+                  openShareModal(viewSharesModal.noteId, viewSharesModal.noteTitle);
+                }}
+                className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl transition-all duration-300 shadow-lg hover:shadow-xl font-medium"
+              >
+                Share More
               </button>
             </div>
           </div>

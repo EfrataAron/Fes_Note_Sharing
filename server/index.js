@@ -320,6 +320,115 @@ app.get('/api/notes', authenticateToken, async (req, res) => {
   }
 });
 
+// Share note with multiple users (MUST be before /api/notes/:id route)
+app.post('/api/notes/:id/share', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { usernames, permission = 'read' } = req.body;
+
+    // Support both single username (string) and multiple usernames (array)
+    const usernameList = Array.isArray(usernames) ? usernames : [usernames];
+
+    if (!usernameList || usernameList.length === 0) {
+      return res.status(400).json({ error: 'At least one username is required' });
+    }
+
+    // Validate permission
+    if (!['read', 'edit'].includes(permission)) {
+      return res.status(400).json({ error: 'Invalid permission. Use "read" or "edit"' });
+    }
+
+    // Check if note exists and belongs to user
+    const [notes] = await pool.execute(
+      'SELECT id, title FROM notes WHERE id = ? AND user_id = ?',
+      [id, req.user.userId]
+    );
+
+    if (notes.length === 0) {
+      return res.status(404).json({ error: 'Note not found or you do not own this note' });
+    }
+
+    const results = {
+      successful: [],
+      failed: []
+    };
+
+    // Process each username
+    for (const username of usernameList) {
+      try {
+        const trimmedUsername = username.trim();
+        if (!trimmedUsername) continue;
+
+        // Find user to share with
+        const [users] = await pool.execute(
+          'SELECT id, username FROM users WHERE username = ?',
+          [trimmedUsername]
+        );
+
+        if (users.length === 0) {
+          results.failed.push({ username: trimmedUsername, error: 'User not found' });
+          continue;
+        }
+
+        const sharedWithUser = users[0];
+
+        // Don't allow sharing with yourself
+        if (sharedWithUser.id === req.user.userId) {
+          results.failed.push({ username: trimmedUsername, error: 'Cannot share with yourself' });
+          continue;
+        }
+
+        // Check if already shared
+        const [existingShares] = await pool.execute(
+          'SELECT id FROM shared_notes WHERE note_id = ? AND shared_with_id = ?',
+          [id, sharedWithUser.id]
+        );
+
+        if (existingShares.length > 0) {
+          // Update existing share
+          await pool.execute(
+            'UPDATE shared_notes SET permission = ? WHERE note_id = ? AND shared_with_id = ?',
+            [permission, id, sharedWithUser.id]
+          );
+          results.successful.push({ username: trimmedUsername, action: 'updated' });
+        } else {
+          // Create new share
+          await pool.execute(
+            'INSERT INTO shared_notes (note_id, owner_id, shared_with_id, permission) VALUES (?, ?, ?, ?)',
+            [id, req.user.userId, sharedWithUser.id, permission]
+          );
+          results.successful.push({ username: trimmedUsername, action: 'shared' });
+        }
+      } catch (userError) {
+        console.error(`Error sharing with ${username}:`, userError);
+        results.failed.push({ username: username.trim(), error: 'Failed to share' });
+      }
+    }
+
+    // Determine response based on results
+    if (results.successful.length === 0) {
+      return res.status(400).json({ 
+        error: 'Failed to share with any users', 
+        details: results.failed 
+      });
+    }
+
+    const message = results.successful.length === 1 
+      ? `Note shared successfully with ${results.successful[0].username}`
+      : `Note shared successfully with ${results.successful.length} users`;
+
+    res.json({
+      message,
+      successful: results.successful,
+      failed: results.failed,
+      permission: permission
+    });
+  } catch (error) {
+    console.error('Share note error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Get single note
 app.get('/api/notes/:id', authenticateToken, async (req, res) => {
   try {
@@ -433,69 +542,7 @@ app.put('/api/notes/:id', authenticateToken, validateNote, async (req, res) => {
   }
 });
 
-// Share note with another user
-app.post('/api/notes/:id/share', authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { username, permission = 'read' } = req.body;
 
-    // Validate permission
-    if (!['read', 'edit'].includes(permission)) {
-      return res.status(400).json({ error: 'Invalid permission. Use "read" or "edit"' });
-    }
-
-    // Check if note exists and belongs to user
-    const [notes] = await pool.execute(
-      'SELECT id, title FROM notes WHERE id = ? AND user_id = ?',
-      [id, req.user.userId]
-    );
-
-    if (notes.length === 0) {
-      return res.status(404).json({ error: 'Note not found or you do not own this note' });
-    }
-
-    // Find user to share with
-    const [users] = await pool.execute(
-      'SELECT id, username FROM users WHERE username = ?',
-      [username]
-    );
-
-    if (users.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    const sharedWithUser = users[0];
-
-    // Check if already shared
-    const [existingShares] = await pool.execute(
-      'SELECT id FROM shared_notes WHERE note_id = ? AND shared_with_id = ?',
-      [id, sharedWithUser.id]
-    );
-
-    if (existingShares.length > 0) {
-      // Update existing share
-      await pool.execute(
-        'UPDATE shared_notes SET permission = ? WHERE note_id = ? AND shared_with_id = ?',
-        [permission, id, sharedWithUser.id]
-      );
-    } else {
-      // Create new share
-      await pool.execute(
-        'INSERT INTO shared_notes (note_id, owner_id, shared_with_id, permission) VALUES (?, ?, ?, ?)',
-        [id, req.user.userId, sharedWithUser.id, permission]
-      );
-    }
-
-    res.json({
-      message: 'Note shared successfully',
-      sharedWith: sharedWithUser.username,
-      permission: permission
-    });
-  } catch (error) {
-    console.error('Share note error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
 
 // Get shared notes (notes shared with current user)
 app.get('/api/notes/shared', authenticateToken, async (req, res) => {
@@ -512,6 +559,79 @@ app.get('/api/notes/shared', authenticateToken, async (req, res) => {
     res.json({ notes: sharedNotes });
   } catch (error) {
     console.error('Get shared notes error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get users who have access to a specific note (for note owners)
+app.get('/api/notes/:id/shares', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Check if note exists and belongs to user
+    const [notes] = await pool.execute(
+      'SELECT id, title FROM notes WHERE id = ? AND user_id = ?',
+      [id, req.user.userId]
+    );
+
+    if (notes.length === 0) {
+      return res.status(404).json({ error: 'Note not found or you do not own this note' });
+    }
+
+    // Get all users who have access to this note
+    const [shares] = await pool.execute(`
+      SELECT u.username, sn.permission, sn.created_at as shared_at
+      FROM shared_notes sn
+      JOIN users u ON sn.shared_with_id = u.id
+      WHERE sn.note_id = ?
+      ORDER BY sn.created_at DESC
+    `, [id]);
+
+    res.json({ shares });
+  } catch (error) {
+    console.error('Get note shares error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Remove sharing access from a user
+app.delete('/api/notes/:id/shares/:username', authenticateToken, async (req, res) => {
+  try {
+    const { id, username } = req.params;
+
+    // Check if note exists and belongs to user
+    const [notes] = await pool.execute(
+      'SELECT id, title FROM notes WHERE id = ? AND user_id = ?',
+      [id, req.user.userId]
+    );
+
+    if (notes.length === 0) {
+      return res.status(404).json({ error: 'Note not found or you do not own this note' });
+    }
+
+    // Find user to remove access from
+    const [users] = await pool.execute(
+      'SELECT id FROM users WHERE username = ?',
+      [username]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Remove sharing access
+    const [result] = await pool.execute(
+      'DELETE FROM shared_notes WHERE note_id = ? AND shared_with_id = ?',
+      [id, users[0].id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Share not found' });
+    }
+
+    res.json({ message: `Removed sharing access for ${username}` });
+  } catch (error) {
+    console.error('Remove share error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

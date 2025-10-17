@@ -9,6 +9,7 @@ A beautiful, modern note-taking application built with React and Node.js. Organi
 - Responsive design that works on all devices
 - Smooth animations and hover effects
 - Sticky notes background on login/register pages
+- Note sharing between users
 
 ### 📝 **Note Management**
 - Create, edit, and delete notes
@@ -21,6 +22,13 @@ A beautiful, modern note-taking application built with React and Node.js. Organi
 - Visual organization with colored backgrounds
 - Easy color selection in note editor
 - Automatic color fallback system
+
+### 🔗 **Note Sharing**
+- Share notes with multiple users simultaneously
+- Support for different permission levels (Read Only / Can Edit)
+- Simple comma-separated username input
+- View and manage who has access to your notes
+- Shared notes display with owner information and permission badges
 
 ### 🔐 **User Authentication**
 - Secure user registration and login
